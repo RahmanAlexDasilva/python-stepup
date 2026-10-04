@@ -2,8 +2,22 @@
 <html lang="id" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f4f6fc">
 <title>Portal Modul Interaktif Berpikir Komputasional & Python</title>
+<script>
+  /* Terapkan tema tersimpan SEBELUM render agar tidak berkedip di jaringan lambat */
+  try {
+    var _t = localStorage.getItem('portal-theme');
+    if (_t) document.documentElement.setAttribute('data-theme', _t);
+  } catch (e) {}
+</script>
+<!-- Hangatkan koneksi ke sumber konten berat (Drive & YouTube) supaya iframe terbuka lebih cepat -->
+<link rel="preconnect" href="https://drive.google.com">
+<link rel="preconnect" href="https://www.youtube-nocookie.com">
+<link rel="dns-prefetch" href="https://docs.google.com">
+<link rel="dns-prefetch" href="https://quiz.zep.us">
 <style>
   :root{
     --bg:#f4f6fc; --surface:#ffffff; --surface-2:#eef1f9;
@@ -23,8 +37,10 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{font-family:'Segoe UI',system-ui,-apple-system,'Inter',sans-serif;
-    background:var(--bg);color:var(--text);min-height:100vh;
+    background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;
+    -webkit-text-size-adjust:100%;
     transition:background .35s ease,color .35s ease;overflow-x:hidden}
+  img,svg,video,iframe{max-width:100%}
   body::before{content:"";position:fixed;inset:0;z-index:-1;
     background:radial-gradient(700px 400px at 12% -5%, rgba(99,102,241,.20), transparent 60%),
       radial-gradient(700px 400px at 88% 0%, rgba(6,182,212,.16), transparent 60%);
@@ -33,7 +49,8 @@
   /* HEADER */
   header{position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);
     background:color-mix(in srgb, var(--surface) 78%, transparent);
-    border-bottom:1px solid var(--border)}
+    border-bottom:1px solid var(--border);
+    padding-top:env(safe-area-inset-top)}
   .nav{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px}
   .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.05rem;letter-spacing:-.3px}
   .brand .logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
@@ -138,7 +155,7 @@
     backdrop-filter:blur(7px);display:none;padding:22px;opacity:0;transition:opacity .28s}
   .overlay.show{display:flex;opacity:1}
   .viewer{background:var(--surface);border:1px solid var(--border);border-radius:22px;
-    width:100%;max-width:1120px;margin:auto;height:min(90vh,940px);
+    width:100%;max-width:1120px;margin:auto;height:min(90vh,940px);height:min(90dvh,940px);
     display:flex;flex-direction:column;overflow:hidden;
     box-shadow:0 30px 70px -20px rgba(0,0,0,.6);
     transform:scale(.96) translateY(14px);transition:transform .3s cubic-bezier(.2,.8,.3,1)}
@@ -149,7 +166,9 @@
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .viewer-head p{font-size:.75rem;color:var(--muted);margin-top:2px}
   .tabs{display:flex;gap:6px;padding:12px 20px 0;flex-shrink:0;background:var(--surface-2);
-    border-bottom:1px solid var(--border);overflow-x:auto}
+    border-bottom:1px solid var(--border);overflow-x:auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
   .tab{padding:11px 18px;border:none;background:transparent;color:var(--muted);
     font-size:.85rem;font-weight:600;cursor:pointer;border-radius:11px 11px 0 0;
     transition:.22s;display:flex;align-items:center;gap:7px;position:relative;bottom:-1px;white-space:nowrap}
@@ -307,10 +326,13 @@
 
   /* ZEP CARDS */
   .zep-showcase{position:absolute;inset:0;overflow-y:auto;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;padding:36px 24px;gap:22px;
+    align-items:center;justify-content:flex-start;padding:36px 24px;gap:22px;
     background:radial-gradient(600px 300px at 50% 0%, rgba(99,102,241,.14), transparent 70%),
       radial-gradient(500px 300px at 50% 100%, rgba(6,182,212,.14), transparent 70%),
       var(--surface-2);animation:fadeIn .4s ease}
+  .zep-showcase > *{flex-shrink:0}
+  .zep-showcase > *:first-child{margin-top:auto}
+  .zep-showcase > *:last-child{margin-bottom:auto}
   .zep-info{text-align:center;max-width:520px}
   .zep-info .zep-icon{width:72px;height:72px;border-radius:20px;margin:0 auto 16px;
     display:grid;place-items:center;font-size:34px;
@@ -361,7 +383,7 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .loader p{font-size:.82rem;color:var(--muted);text-align:center}
 
-  .viewer-foot{padding:13px 20px;border-top:1px solid var(--border);display:flex;gap:9px;
+  .viewer-foot{padding:13px 20px calc(13px + env(safe-area-inset-bottom));border-top:1px solid var(--border);display:flex;gap:9px;
     flex-wrap:wrap;align-items:center;flex-shrink:0;background:var(--surface)}
   .viewer-foot .btn{flex:0 0 auto;font-size:.78rem}
   .note{font-size:.74rem;color:var(--muted);margin-left:auto;display:flex;align-items:center;gap:6px}
@@ -376,24 +398,78 @@
   footer b{color:var(--text)}
 
   @media (max-width:720px){
-    .nav{flex-wrap:wrap;gap:10px}
-    .search{order:3;max-width:100%;flex-basis:100%;margin-left:0}
-    .hero{padding:38px 18px 22px}
-    .grid{padding:18px 16px 60px;grid-template-columns:1fr}
-    .overlay{padding:0}
-    .viewer{height:100vh;max-height:100vh;border-radius:0;border:0}
-    .tabs{padding:10px 12px 0}
-    .tab{padding:10px 13px;font-size:.78rem}
-    .note{display:none}
-    .card-actions .btn{flex:1 1 100%}
-    .challenge-panel{padding:18px 14px 30px}
+    /* Matikan blur & transparansi berat: mengurangi beban paint/scroll di HP kelas bawah */
+    header{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--surface)}
+    .overlay{backdrop-filter:none;-webkit-backdrop-filter:none}
 
-    .ch-hero{padding:22px 20px}
-    .ch-hero h2{font-size:1.3rem}
-    .ch-section{padding:18px}
-    .code-block{font-size:.76rem;padding:13px 14px}
-    .chip{padding:11px 22px;font-size:.9rem}
-    .toolbar{padding:22px 14px 8px;gap:10px}
+    .nav{flex-wrap:wrap;gap:10px;padding:12px 16px}
+    .search{order:3;max-width:100%;flex-basis:100%;margin-left:0}
+    .brand{font-size:1rem}
+    .brand .logo{width:34px;height:34px;font-size:17px}
+
+    .hero{padding:34px 16px 20px}
+    .hero p{font-size:.94rem}
+    .stats{gap:10px;margin-top:26px}
+    .stat{flex:1 1 calc(50% - 5px);min-width:0;padding:12px 14px}
+    .stat b{font-size:1.3rem}
+
+    .toolbar{padding:20px 14px 8px;gap:9px}
+    .chip{padding:10px 20px;font-size:.88rem}
+
+    .grid{padding:18px 16px 60px;grid-template-columns:1fr;gap:16px}
+    .card{padding:20px}
+
+    /* Modal jadi layar penuh, pakai dvh agar tidak terpotong address bar HP */
+    .overlay{padding:0}
+    .viewer{height:100vh;height:100dvh;max-height:100dvh;width:100%;border-radius:0;border:0}
+    .viewer-head{padding:12px 14px;gap:10px}
+    .viewer-head h2{font-size:.94rem}
+
+    /* Tab dibungkus & bisa digulir supaya tidak ada yang terpotong */
+    .tabs{padding:10px 12px 0;flex-wrap:wrap;row-gap:4px;overflow-x:visible;
+      -webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{padding:9px 11px;font-size:.75rem}
+
+    /* Footer aman dari home-indicator, tombol bisa turun baris */
+    .viewer-foot{padding:11px 14px calc(11px + env(safe-area-inset-bottom));gap:8px}
+    .viewer-foot .btn{flex:1 1 calc(50% - 4px);justify-content:center;white-space:normal;text-align:center;padding:10px 12px}
+    .note{display:none}
+
+    .card-actions .btn{flex:1 1 100%}
+
+    .challenge-panel{padding:16px 12px calc(28px + env(safe-area-inset-bottom))}
+    .ch-wrap{gap:16px}
+    .ch-hero{padding:20px 18px}
+    .ch-hero h2{font-size:1.22rem}
+    .ch-hero p{font-size:.9rem}
+    .ch-section{padding:16px}
+    .ch-section-head h3{font-size:1rem}
+
+    /* Beri ruang atas untuk label & tombol salin agar tidak menimpa kode */
+    .code-block{font-size:.75rem;padding:38px 14px 14px;overflow-x:hidden}
+    .code-label{top:7px;left:10px;right:auto}
+    .code-copy{top:7px;right:10px}
+
+    .step:hover,.opsi:hover{transform:none}
+
+    .zep-showcase{padding:26px 16px calc(26px + env(safe-area-inset-bottom))}
+    .zep-info .zep-icon{width:60px;height:60px;font-size:28px}
+    .zep-info h3{font-size:1.1rem}
+    .zep-info p{font-size:.85rem}
+    .zep-thumb .play-btn{width:60px;height:60px}
+    .zep-thumb .play-btn svg{width:26px;height:26px}
+    .zep-thumb .thumb-title{font-size:1rem}
+
+    footer{padding:24px 16px calc(24px + env(safe-area-inset-bottom))}
+  }
+
+  @media (max-width:380px){
+    .nav{padding:10px 12px}
+    .chip{padding:9px 15px;font-size:.82rem}
+    .tab{padding:8px 10px;font-size:.71rem}
+    .stat span{font-size:.68rem}
+    .viewer-foot .btn{font-size:.75rem}
   }
 </style>
 </head>
@@ -464,7 +540,7 @@
           <p>Memuat konten...</p>
         </div>
       </div>
-      <iframe id="mainFrame" allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture"></iframe>
+      <iframe id="mainFrame" loading="lazy" allow="fullscreen; autoplay; clipboard-write; encrypted-media; picture-in-picture"></iframe>
       <div class="zep-showcase" id="zepShowcase" style="display:none"></div>
       <div class="challenge-panel" id="challengePanel" style="display:none"></div>
     </div>
@@ -874,12 +950,19 @@ function toast(msg){
 const themeBtn = document.getElementById('themeBtn');
 const savedTheme = localStorage.getItem('portal-theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
+function syncThemeColor(){
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const m = document.querySelector('meta[name="theme-color"]');
+  if(m) m.setAttribute('content', dark ? '#080d1b' : '#f4f6fc');
+}
+syncThemeColor();
 themeBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
 themeBtn.addEventListener('click', () => {
   const now = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', now);
   localStorage.setItem('portal-theme', now);
   themeBtn.textContent = now === 'dark' ? '☀️' : '🌙';
+  syncThemeColor();
 });
 
 /* ============================================================
@@ -1358,10 +1441,12 @@ function showInfo(msg){
   loader.classList.add('hide');
   const html = `
     <!DOCTYPE html><html><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
       body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;
         background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#06b6d4);
-        color:#fff;display:grid;place-items:center;height:100vh;padding:32px;text-align:center}
+        color:#fff;display:grid;place-items:center;min-height:100vh;min-height:100dvh;
+        padding:24px;text-align:center}
       .box{max-width:520px}
       h2{font-size:1.5rem;margin:0 0 12px;letter-spacing:-.5px}
       p{opacity:.9;line-height:1.7;margin:0 0 8px;font-size:.95rem}
