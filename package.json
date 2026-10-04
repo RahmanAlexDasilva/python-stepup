@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@opencode/cli": "^2.0.18",
+    "freebuff": "^0.0.203"
+  },
+  "allowScripts": {
+    "@opencode/cli@2.0.18": true
+  }
+}
