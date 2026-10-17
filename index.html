@@ -149,6 +149,11 @@
     min-width:17px;height:17px;padding:0 5px;border-radius:999px;
     background:rgba(255,255,255,.3);font-size:.66rem;font-weight:800;margin-left:2px}
   .btn:not(.primary):not(.reflection) .count-badge{background:rgba(99,102,241,.18);color:var(--primary)}
+  /* Semua kontrol harus responsif terhadap sentuhan di HP (tanpa delay 300ms) */
+  .btn,.chip,.tab,.subbar button,.opsi,.icon-btn,.code-copy,.zep-thumb{
+    touch-action:manipulation;-webkit-tap-highlight-color:rgba(99,102,241,.2)}
+  /* Tombol yang tidak punya tujuan disembunyikan agar tidak terlihat bisa ditekan */
+  .viewer-foot .btn[hidden]{display:none !important}
 
   /* MODAL */
   .overlay{position:fixed;inset:0;z-index:100;background:rgba(6,10,22,.72);
@@ -1215,10 +1220,10 @@ function renderChallenge(ch){
 
 function bindChallengeInteractions(){
   challengePanel.querySelectorAll('.code-copy').forEach(btn => {
-    btn.addEventListener('click', e => {
+    btn.addEventListener('click', async e => {
       e.stopPropagation();
-      navigator.clipboard.writeText(btn.dataset.copy).then(() => toast('✅ Kode disalin!'))
-        .catch(() => toast('❌ Gagal menyalin'));
+      const ok = await copyText(btn.dataset.copy);
+      toast(ok ? '✅ Kode disalin!' : '❌ Gagal menyalin');
     });
   });
 
@@ -1284,6 +1289,7 @@ function showZepCards(){
   hideAllPanels();
   loader.classList.add('hide');
   zepShowcase.style.display = 'flex';
+  syncFooterLinks();
 
   const items = getQuizzes(current);
   if(!items.length){
@@ -1316,8 +1322,7 @@ function showZepCards(){
     </div>
     ${items.length === 1 ? `<div style="width:100%;max-width:560px">${cardsHtml}</div>` : `<div style="display:grid;gap:14px;width:100%;max-width:560px">${cardsHtml}</div>`}`;
 
-  openZep.href = items[0].url;
-  openZep.style.display = '';
+  syncFooterLinks();
 }
 
 function renderSubbar(items, activeIdx, type){
@@ -1387,6 +1392,47 @@ function loadMaterial(idx){
   }
 }
 
+/* Footer viewer dipakai di semua tab. Tanpa ini, tombol Drive/Quiz hanya
+   punya href setelah tab-nya dibuka, sehingga di HP (dan desktop) tombol
+   tampak normal tetapi tidak bisa ditekan sama sekali. */
+function syncFooterLinks(){
+  if(!current) return;
+
+  const mats = getMaterialTabs(current);
+  const mat  = mats[materialIdx] || mats[0];
+  if(mat){
+    openDrive.href = mat.url;
+    openDrive.innerHTML = mat.type === 'video' ? '▶️ Buka di YouTube' : '📂 Buka di Drive';
+    openDrive.style.display = '';
+    openDrive.removeAttribute('hidden');
+  } else {
+    openDrive.removeAttribute('href');
+    openDrive.hidden = true;
+  }
+
+  const quizzes = getQuizzes(current);
+  const quiz = quizzes[quizIdx] || quizzes[0];
+  if(quiz){
+    openZep.href = quiz.url;
+    openZep.style.display = '';
+    openZep.removeAttribute('hidden');
+  } else {
+    openZep.removeAttribute('href');
+    openZep.hidden = true;
+  }
+
+  if(current.reflection){
+    openForm.href = current.reflection;
+    openForm.style.display = '';
+    openForm.removeAttribute('hidden');
+  } else {
+    openForm.removeAttribute('href');
+    openForm.hidden = true;
+  }
+
+  copyBtn.removeAttribute('hidden');
+}
+
 /* Konversi link YouTube apa pun menjadi URL embed.
    Memakai youtube-nocookie.com agar tidak kena "Error 153" (YouTube butuh Referer). */
 function toYoutubeEmbed(url){
@@ -1433,6 +1479,8 @@ function switchTab(tab){
     subbar.classList.remove('show'); subbar.innerHTML = '';
     showInfo();
   }
+
+  syncFooterLinks();
 }
 
 function showInfo(msg){
@@ -1476,19 +1524,40 @@ document.addEventListener('keydown', e => {
   if(e.key === 'Escape' && overlay.classList.contains('show')) closeViewer();
 });
 
+/* Clipboard API hanya tersedia di secure context (https/localhost). Saat file
+   dibuka langsung dari HP (file://) atau http, pakai fallback execCommand. */
+async function copyText(text){
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch(e){}
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){ return false; }
+}
+
 copyBtn.addEventListener('click', async () => {
   if(!current) return;
   let link = '';
   if(currentTab === 'drive')           link = getMaterialTabs(current)[materialIdx]?.url;
   else if(currentTab === 'zep')        link = getQuizzes(current)[quizIdx]?.url;
   else if(currentTab === 'reflection') link = current.reflection;
-  else if(currentTab === 'tantangan')  { toast('ℹ️ Tantangan tidak memiliki link tunggal'); return; }
+  else if(currentTab === 'tantangan')  { toast('ℹ️ Buka tab lain untuk menyalin link'); return; }
 
   if(!link) return toast('Link tidak tersedia');
-  try{
-    await navigator.clipboard.writeText(link);
-    toast('✅ Link berhasil disalin!');
-  }catch{ toast('❌ Gagal menyalin link'); }
+  const ok = await copyText(link);
+  toast(ok ? '✅ Link berhasil disalin!' : '❌ Gagal menyalin link');
 });
 
 /* ============================================================
